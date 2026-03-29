@@ -97,7 +97,13 @@ const App: React.FC = () => {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    // 1. Load Initial History from Database
+    // 1. Firebase Connection Status Listener
+    const connectedRef = ref(database, '.info/connected');
+    const unsubscribeConnected = onValue(connectedRef, (snap) => {
+      setConnected(snap.val() === true);
+    });
+
+    // 2. Load Initial History from Database
     const historyRef = query(ref(database, 'sensor_history'), orderByKey(), limitToLast(1000));
     get(historyRef).then((snapshot: any) => {
       if (snapshot.exists()) {
@@ -106,14 +112,15 @@ const App: React.FC = () => {
         historyArray.sort((a, b) => Number(a.id) - Number(b.id));
         setFullHistory(historyArray);
       }
-    }).catch(console.error);
+    }).catch((error) => {
+      console.error("Error fetching history:", error);
+    });
 
-    // 2. Firebase Listener for Live Data
+    // 3. Firebase Listener for Live Data
     const iotRef = ref(database, 'iot_system');
-    const unsubscribe = onValue(iotRef, (snapshot: any) => {
+    const unsubscribeIot = onValue(iotRef, (snapshot: any) => {
       const val = snapshot.val();
       if (val) {
-        setConnected(true);
         
         const timestampDate = new Date();
         // Format: MM-DD-YYYY HH:mm:ss
@@ -228,18 +235,18 @@ const App: React.FC = () => {
         console.log("Connected to Firebase, but 'iot_system' node is empty or missing.");
       }
     }, (error: any) => {
-      console.error("Firebase Read Error:", error);
-      setConnected(false);
+      console.error("Firebase Read Error on 'iot_system':", error);
     });
 
-    // 2. Refresh Timer
+    // 4. Refresh Timer
     // Updates 'now' every second to trigger re-renders for stale data checks
     const timer = setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
     return () => {
-      unsubscribe();
+      unsubscribeConnected();
+      unsubscribeIot();
       clearInterval(timer);
     };
   }, []);
