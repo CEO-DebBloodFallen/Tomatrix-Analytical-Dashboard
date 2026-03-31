@@ -201,8 +201,8 @@ const App: React.FC = () => {
         setSystemState(newSystemState);
 
         // --- MAP TO ANALYTICS MODEL ---
-        // Use espTimestamp if available, otherwise fallback to 5-second buckets to prevent duplicate keys
-        const readingId = espTimestamp > 0 ? espTimestamp.toString() : Math.floor(timestampDate.getTime() / 5000).toString();
+        // Use 5-second buckets to prevent duplicate keys and ensure the chart scrolls
+        const readingId = Math.floor(timestampDate.getTime() / 5000).toString();
         
         const newReading: SensorReading = {
           id: readingId,

@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { SensorReading } from '../../types';
 import { DateRangePicker } from '../DateRangePicker';
-import { Download, Filter } from 'lucide-react';
+import { Download, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 type AlertFilter = 'voc' | 'nh3' | 'co2' | 'temp' | 'hum' | 'weight';
 
@@ -13,6 +13,8 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [activeFilters, setActiveFilters] = useState<AlertFilter[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ROWS_PER_PAGE = 50;
 
   const toggleFilter = (filter: AlertFilter) => {
     setActiveFilters(prev => 
@@ -48,19 +50,62 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
       });
     }
 
-    // 3. Limit if no dates are set
-    if (!startDate && !endDate) {
-      if (activeFilters.length > 0) {
-        return filtered.slice(-100); // Show more rows if filtering for alerts
-      }
-      return filtered.slice(-20); // Default view
-    }
-    
     return filtered;
   }, [history, startDate, endDate, activeFilters]);
 
   // Reverse to show newest first
-  const reversedData = [...filteredHistory].reverse();
+  const reversedData = useMemo(() => [...filteredHistory].reverse(), [filteredHistory]);
+
+  // Reset pagination when filters or dates change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilters, startDate, endDate]);
+
+  const totalRecords = reversedData.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / ROWS_PER_PAGE));
+
+  // Ensure currentPage is valid
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * ROWS_PER_PAGE;
+    return reversedData.slice(start, start + ROWS_PER_PAGE);
+  }, [reversedData, currentPage]);
+
+  const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * ROWS_PER_PAGE + 1;
+  const endRecord = Math.min(currentPage * ROWS_PER_PAGE, totalRecords);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
 
   const handleExportCSV = () => {
     if (reversedData.length === 0) return;
@@ -218,7 +263,8 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
             </tr>
           </thead>
           <tbody className="text-xs text-slate-600 dark:text-gray-300 font-mono transition-colors duration-500">
-            {reversedData.map((row, i) => {
+            {paginatedData.map((row, i) => {
+              const absoluteIndex = (currentPage - 1) * ROWS_PER_PAGE + i;
               const isVocAlert = row.voc >= 2;
               const isNh3Alert = row.nh3 >= 1;
               const isCo2Alert = row.co2 >= 800;
@@ -234,7 +280,7 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
                   className={`border-b border-slate-200 dark:border-white/5 transition-colors ${
                     isRowAlert 
                       ? 'bg-red-50/80 dark:bg-red-900/20 animate-[pulse_3s_ease-in-out_infinite] hover:bg-red-100 dark:hover:bg-red-900/30' 
-                      : i === 0 
+                      : absoluteIndex === 0 
                         ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-800 dark:text-blue-100 hover:bg-slate-100 dark:hover:bg-white/5' 
                         : 'hover:bg-slate-100 dark:hover:bg-white/5'
                   }`}
@@ -263,6 +309,70 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          Showing records <span className="font-bold text-slate-700 dark:text-slate-200">{startRecord}–{endRecord}</span> of <span className="font-bold text-slate-700 dark:text-slate-200">{totalRecords}</span>
+        </div>
+        
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setCurrentPage(1)} 
+              disabled={currentPage === 1} 
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="First Page"
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              disabled={currentPage === 1} 
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            <div className="flex items-center px-1 gap-1">
+              {getPageNumbers().map((pageNum, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => typeof pageNum === 'number' ? setCurrentPage(pageNum) : null}
+                  disabled={pageNum === '...'}
+                  className={`min-w-[28px] h-7 flex items-center justify-center rounded-md text-xs font-bold transition-colors ${
+                    pageNum === currentPage 
+                      ? 'bg-purple-500 text-white shadow-md' 
+                      : pageNum === '...' 
+                        ? 'text-slate-400 cursor-default' 
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+              disabled={currentPage === totalPages} 
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setCurrentPage(totalPages)} 
+              disabled={currentPage === totalPages} 
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Last Page"
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

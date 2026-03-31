@@ -33,7 +33,7 @@ export const EnvLevelsBarChart: React.FC<Props> = ({ history }) => {
     <div className="w-full h-full min-h-[200px] bg-white dark:bg-[#0f172a]/40 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/5 p-6 flex flex-col shadow-sm dark:shadow-md transition-colors duration-500">
       <h3 className="text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
         <span className="w-1 h-4 bg-teal-500 rounded-full shadow-[0_0_10px_#14b8a6]"></span>
-        Temperature and Humidity Over Time
+        Environment History
       </h3>
       <div className="flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
