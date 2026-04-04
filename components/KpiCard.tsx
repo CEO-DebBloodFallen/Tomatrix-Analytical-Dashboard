@@ -1,4 +1,5 @@
 import React from 'react';
+import { truncateToTwoDecimals } from '../utils/format';
 
 interface KpiCardProps {
   title: string;
@@ -51,7 +52,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({ title, subtitle, value, unit, 
       <div className="relative z-10 flex items-baseline gap-2">
         <span className={`font-mono font-medium tracking-tight text-slate-800 dark:text-white drop-shadow-sm dark:drop-shadow-lg ${isDisconnected ? 'text-xl text-red-500 dark:text-red-400' : 'text-4xl'}`}>
           {typeof value === 'number' 
-            ? value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 0 }) 
+            ? truncateToTwoDecimals(value) 
             : value}
         </span>
         {!isDisconnected && (

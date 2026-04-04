@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { SensorReading } from '../../types';
 import { DateRangePicker } from '../DateRangePicker';
 import { Download, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { truncateToTwoDecimals } from '../../utils/format';
 
 type AlertFilter = 'voc' | 'nh3' | 'co2' | 'temp' | 'hum' | 'weight';
 
@@ -25,16 +26,75 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
   };
 
   const filteredHistory = useMemo(() => {
-    let filtered = history;
+    // --- 15-Minute Interval Grouping ---
+    const bucketed = new Map<string, SensorReading>();
     
+    for (const row of history) {
+      if (row.id === 'loading') continue;
+      
+      const parts = row.timestamp.split(' ');
+      if (parts.length === 2) {
+        const [hour, minute] = parts[1].split(':');
+        const minNum = Number(minute);
+        
+        if (!isNaN(minNum)) {
+          const bucketMin = Math.floor(minNum / 15) * 15;
+          const bucketKey = `${parts[0]} ${hour}:${bucketMin.toString().padStart(2, '0')}`;
+          
+          // Create a new row with the standardized 15-minute timestamp
+          const standardizedRow = {
+            ...row,
+            timestamp: `${parts[0]} ${hour}:${bucketMin.toString().padStart(2, '0')}:00`
+          };
+          
+          if (minNum === bucketMin) {
+            // Allow updates only during the exact minute of the interval (e.g., 19:00:00 to 19:00:59)
+            bucketed.set(bucketKey, standardizedRow);
+          } else {
+            // Once the minute has passed (e.g., 19:01:00+), the row is LOCKED.
+            // Only set if it doesn't exist (e.g., if data collection started at 19:05)
+            if (!bucketed.has(bucketKey)) {
+              bucketed.set(bucketKey, standardizedRow);
+            }
+          }
+          continue;
+        }
+      }
+      if (!bucketed.has(row.id)) {
+        bucketed.set(row.id, row);
+      }
+    }
+    
+    let filtered = Array.from(bucketed.values());
+
     // 1. Date Filter
     if (startDate) {
       const start = new Date(startDate).getTime();
-      filtered = filtered.filter(r => parseInt(r.id) >= start);
+      filtered = filtered.filter(r => {
+        const parts = r.timestamp.split(' ');
+        if (parts.length === 2) {
+          const [m, d, y] = parts[0].split('-');
+          const [hr, min, sec] = parts[1].split(':');
+          const t = new Date(Number(y), Number(m)-1, Number(d), Number(hr), Number(min), Number(sec)).getTime();
+          return t >= start;
+        }
+        return true;
+      });
     }
     if (endDate) {
-      const end = new Date(endDate).getTime();
-      filtered = filtered.filter(r => parseInt(r.id) <= end);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      const endMs = end.getTime();
+      filtered = filtered.filter(r => {
+        const parts = r.timestamp.split(' ');
+        if (parts.length === 2) {
+          const [m, d, y] = parts[0].split('-');
+          const [hr, min, sec] = parts[1].split(':');
+          const t = new Date(Number(y), Number(m)-1, Number(d), Number(hr), Number(min), Number(sec)).getTime();
+          return t <= endMs;
+        }
+        return true;
+      });
     }
     
     // 2. Alert Filter
@@ -116,12 +176,12 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
       ...reversedData.map(row => 
         [
           `"${row.timestamp}"`,
-          row.nh3.toFixed(2),
-          row.co2.toFixed(2),
-          row.voc.toFixed(2),
-          row.temperature.toFixed(2),
-          row.weight.toFixed(2),
-          row.humidity.toFixed(2)
+          truncateToTwoDecimals(row.nh3),
+          truncateToTwoDecimals(row.co2),
+          truncateToTwoDecimals(row.voc),
+          truncateToTwoDecimals(row.temperature),
+          truncateToTwoDecimals(row.weight),
+          truncateToTwoDecimals(row.humidity)
         ].join(',')
       )
     ];
@@ -287,22 +347,22 @@ export const LiveReadingsTable: React.FC<Props> = ({ history }) => {
                 >
                   <td className="py-2.5 px-2 opacity-70 whitespace-nowrap text-left pl-4">{row.timestamp}</td>
                   <td className="py-2.5 px-2 text-center">
-                    {isNh3Alert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{row.nh3.toFixed(1)}</span> : row.nh3.toFixed(1)}
+                    {isNh3Alert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{truncateToTwoDecimals(row.nh3)}</span> : truncateToTwoDecimals(row.nh3)}
                   </td>
                   <td className="py-2.5 px-2 text-center">
-                    {isCo2Alert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{row.co2.toFixed(0)}</span> : row.co2.toFixed(0)}
+                    {isCo2Alert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{truncateToTwoDecimals(row.co2)}</span> : truncateToTwoDecimals(row.co2)}
                   </td>
                   <td className="py-2.5 px-2 text-center">
-                    {isVocAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{row.voc.toFixed(1)}</span> : row.voc.toFixed(1)}
+                    {isVocAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{truncateToTwoDecimals(row.voc)}</span> : truncateToTwoDecimals(row.voc)}
                   </td>
                   <td className="py-2.5 px-2 text-center">
-                    {isTempAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{row.temperature.toFixed(1)}</span> : row.temperature.toFixed(1)}
+                    {isTempAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{truncateToTwoDecimals(row.temperature)}</span> : truncateToTwoDecimals(row.temperature)}
                   </td>
                   <td className="py-2.5 px-2 text-center">
-                    {isWeightAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{row.weight.toFixed(1)}</span> : row.weight.toFixed(1)}
+                    {isWeightAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{truncateToTwoDecimals(row.weight)}</span> : truncateToTwoDecimals(row.weight)}
                   </td>
                   <td className="py-2.5 px-2 text-center">
-                    {isHumAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{row.humidity.toFixed(1)}</span> : row.humidity.toFixed(1)}
+                    {isHumAlert ? <span className="inline-block bg-red-500 text-white font-bold px-2 py-0.5 rounded shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse">{truncateToTwoDecimals(row.humidity)}</span> : truncateToTwoDecimals(row.humidity)}
                   </td>
                 </tr>
               );

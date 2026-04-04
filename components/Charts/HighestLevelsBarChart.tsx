@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SensorReading, GAS_COLORS } from '../../types';
+import { truncateToTwoDecimals } from '../../utils/format';
 
 interface Props {
   data: SensorReading;
@@ -16,7 +17,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             <span className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: data.color }}></span>
             <span className="text-slate-800 dark:text-slate-200 font-medium">{label}</span>
           </div>
-          <span className="text-slate-900 dark:text-white font-mono font-bold">{Number(data.value).toFixed(1)}</span>
+          <span className="text-slate-900 dark:text-white font-mono font-bold">{truncateToTwoDecimals(data.value)}</span>
         </div>
       </div>
     );

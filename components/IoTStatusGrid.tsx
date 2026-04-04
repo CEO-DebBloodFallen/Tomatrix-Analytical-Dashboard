@@ -1,5 +1,6 @@
 import React from 'react';
 import { IoTSystemState, SensorHeartbeats } from '../types';
+import { truncateToTwoDecimals } from '../utils/format';
 
 interface Props {
   systemData: IoTSystemState;
@@ -230,7 +231,7 @@ export const IoTStatusGrid: React.FC<Props> = ({ systemData, heartbeats, now, on
             <div className="flex flex-col border-l border-white/10 pl-4 ml-1 min-w-[60px]">
                <div className="flex items-baseline gap-0.5">
                   <span className={`text-lg font-mono font-bold leading-none transition-colors duration-300 ${batConfig.text}`}>
-                      {batteryLevel}
+                      {Math.round(batteryLevel)}
                   </span>
                   <span className="text-[10px] text-slate-500 font-bold">%</span>
                </div>

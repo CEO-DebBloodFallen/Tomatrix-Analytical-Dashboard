@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { SensorReading, GAS_COLORS } from '../../types';
+import { truncateToTwoDecimals } from '../../utils/format';
 
 interface Props {
   data: SensorReading;
@@ -17,7 +18,7 @@ const CustomPieTooltip = ({ active, payload }: any) => {
                 <span className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: entry.color || entry.payload.fill }}></span>
                 <span className="text-slate-800 dark:text-slate-200 font-medium">{entry.name}</span>
               </div>
-              <span className="text-slate-900 dark:text-white font-mono font-bold">{Number(entry.value).toFixed(1)}</span>
+              <span className="text-slate-900 dark:text-white font-mono font-bold">{truncateToTwoDecimals(entry.value)}</span>
             </div>
           ))}
         </div>

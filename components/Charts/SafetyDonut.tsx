@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { SafetyStatus } from '../../types';
+import { truncateToTwoDecimals } from '../../utils/format';
 
 interface Props {
   statusData: SafetyStatus;
@@ -68,7 +69,7 @@ export const SafetyDonut: React.FC<Props> = ({ statusData }) => {
         {/* Center Value */}
         <div className="absolute inset-0 flex items-center justify-center flex-col">
           <span className="text-sm font-black text-slate-800 dark:text-white drop-shadow-sm dark:drop-shadow-md">
-            {statusData.value.toFixed(0)}
+            {truncateToTwoDecimals(statusData.value)}
           </span>
         </div>
       </div>
