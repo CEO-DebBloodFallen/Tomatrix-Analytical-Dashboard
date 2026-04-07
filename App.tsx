@@ -104,7 +104,7 @@ const App: React.FC = () => {
     });
 
     // 2. Load Initial History from Database
-    const historyRef = query(ref(database, 'sensor_history'), orderByKey(), limitToLast(1000));
+    const historyRef = query(ref(database, 'sensor_history'), orderByKey(), limitToLast(20000));
     get(historyRef).then((snapshot: any) => {
       if (snapshot.exists()) {
         const val = snapshot.val();
@@ -229,7 +229,7 @@ const App: React.FC = () => {
             return newHistory;
           }
           const newHistory = [...prev, newReading];
-          return newHistory.slice(-1000); 
+          return newHistory.slice(-20000); 
         });
       } else {
         console.log("Connected to Firebase, but 'iot_system' node is empty or missing.");
