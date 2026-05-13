@@ -25,11 +25,11 @@ export const Header: React.FC<HeaderProps> = ({ activeFilter, onFilterChange, co
       
       <div className="flex items-center gap-5 w-full lg:w-auto justify-center lg:justify-start text-center lg:text-left">
         {/* Transparent Logo processing the uploaded image */}
-        <div className="h-16 flex items-center">
+        <div className="h-40 lg:h-48 flex items-center justify-center -ml-4">
            <TransparentLogo 
              src="/logo.png" 
              alt="Tomatrix Analytics"
-             className="h-full object-contain drop-shadow-lg"
+             className="h-full w-auto object-contain drop-shadow-2xl"
              tolerance={25}
            />
         </div>
