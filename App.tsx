@@ -288,8 +288,36 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 dark:bg-gradient-to-br dark:from-indigo-950 dark:via-[#1e1b4b] dark:to-slate-950 p-4 lg:p-6 overflow-x-hidden font-sans text-slate-900 dark:text-slate-50 transition-colors duration-500">
-      <div className="max-w-[1600px] mx-auto flex flex-col gap-6">
+    <div className="min-h-screen w-full bg-[#0A0A0A] p-4 lg:p-6 overflow-x-hidden font-sans text-slate-50 transition-colors duration-500 relative">
+      
+      {/* UV-C Lamp with Radiant Energy Field Effect */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] pointer-events-none z-[100] flex flex-col items-center justify-start">
+        {/* Floating and Breathing Lamp Container */}
+        <div className="relative w-full flex justify-center items-start animate-float">
+          <div className="relative w-full flex justify-center items-start animate-pulse" style={{ animationDuration: '4s' }}>
+            {/* Intense bloom & flare layer directly behind the lamp */}
+            <div className="absolute top-8 w-3/4 h-8 bg-gradient-to-r from-[#8B00FF] via-[#00F0FF] to-[#A020F0] blur-[25px] mix-blend-screen animate-pulse opacity-90" style={{ animationDuration: '3s' }} />
+            <div className="absolute top-8 w-1/2 h-4 bg-[#00F0FF] blur-[10px] mix-blend-screen opacity-100 animate-pulse" style={{ animationDuration: '2s' }} />
+
+            {/* Core Lamp Image */}
+            <img 
+              src="/uvc-lamp.png" 
+              alt="UV-C Lamp" 
+              className="relative z-10 w-full h-auto object-contain -mt-16 sm:-mt-10 lg:-mt-12 opacity-100 mix-blend-lighten" 
+              style={{
+                filter: 'drop-shadow(0px 15px 40px rgba(0, 240, 255, 0.9)) drop-shadow(0px 0px 15px rgba(139, 0, 255, 1))',
+              }}
+            />
+            
+            {/* Downward light rays projecting into the page from the lamp */}
+            <div className="absolute top-[80px] w-full h-48 bg-gradient-to-b from-[#A020F0]/60 via-[#00F0FF]/15 to-transparent blur-[35px] mix-blend-screen opacity-80 animate-pulse" style={{ animationDuration: '4s' }} />
+            <div className="absolute top-[80px] w-4/5 h-[400px] bg-gradient-to-b from-[#00F0FF]/40 via-[#8B00FF]/10 to-transparent blur-[60px] mix-blend-screen opacity-60 animate-pulse" style={{ animationDuration: '5s' }} />
+            <div className="absolute top-[80px] w-2/5 h-[300px] bg-gradient-to-b from-white/20 via-[#00F0FF]/25 to-transparent blur-[20px] mix-blend-plus-lighter opacity-70 animate-pulse" style={{ animationDuration: '2.5s' }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1600px] mx-auto flex flex-col gap-6 relative z-10 pt-4">
         
         {/* HEADER */}
         <div className="relative">
